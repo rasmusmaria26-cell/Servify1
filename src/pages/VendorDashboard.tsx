@@ -22,6 +22,7 @@ import {
   Settings,
   HelpCircle,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ import { fetchVendorBookings, acceptBooking, rejectBooking, updateBookingStatus 
 import VendorReviews from "@/components/vendor/VendorReviews";
 import VendorEarnings from "@/components/vendor/VendorEarnings";
 import { VendorProfileEditDialog } from "@/components/profile/VendorProfileEditDialog";
+import { BookingDetailsDialog } from "@/components/booking/BookingDetailsDialog";
 
 interface VendorProfile {
   id: string;
@@ -56,6 +58,10 @@ const VendorDashboard = () => {
   const [vendorError, setVendorError] = useState<string | null>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
+
+  // Dialog State
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     loadVendorData();
@@ -100,6 +106,7 @@ const VendorDashboard = () => {
 
       // Map bookings to the format expected by the UI
       const pendingRequests = bookings.pending.map((booking: any) => ({
+        ...booking,
         id: booking.id,
         customer: booking.customer?.full_name || booking.customer?.email || "Unknown Customer",
         customerImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
@@ -108,9 +115,12 @@ const VendorDashboard = () => {
         time: `${new Date(booking.scheduled_date).toLocaleDateString()} at ${booking.scheduled_time}`,
         price: booking.estimated_price || booking.service?.base_price || 0,
         description: booking.issue_description,
+        status: booking.status,
+        vendor_id: vendorData.id,
       }));
 
       const activeJobs = bookings.active.map((booking: any) => ({
+        ...booking,
         id: booking.id,
         customer: booking.customer?.full_name || booking.customer?.email || "Unknown Customer",
         customerImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
@@ -120,6 +130,7 @@ const VendorDashboard = () => {
         eta: booking.status === "accepted" ? "On the way" : booking.status,
         price: booking.final_price || booking.estimated_price || 0,
         address: booking.address,
+        vendor_id: vendorData.id,
       }));
 
       setRequests(pendingRequests);
@@ -133,6 +144,7 @@ const VendorDashboard = () => {
         title: "Error loading data",
         description: "Unable to fetch vendor information. Please try again.",
         variant: "destructive",
+        duration: 3000,
       });
     } finally {
       setIsLoadingVendor(false);
@@ -224,6 +236,11 @@ const VendorDashboard = () => {
   const handleNavigate = (address: string) => {
     const encodedAddress = encodeURIComponent(address);
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
+  };
+
+  const handleViewDetails = (booking: any) => {
+    setSelectedBooking(booking);
+    setIsDetailsOpen(true);
   };
 
   const handleLogout = async () => {
@@ -430,6 +447,15 @@ const VendorDashboard = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="gap-1 bg-accent/10 border-accent/20 hover:bg-accent/20 text-accent-foreground"
+                              onClick={() => handleViewDetails(request)}
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              Chat
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="gap-1"
                               onClick={() => handleDeclineJob(request.id)}
                               disabled={isDeclining === request.id}
@@ -512,6 +538,14 @@ const VendorDashboard = () => {
                               variant="outline"
                               size="sm"
                               className="flex-1 gap-1"
+                              onClick={() => handleViewDetails(job)}
+                            >
+                              <MessageCircle className="w-4 h-4" /> Chat
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 gap-1"
                               onClick={() => handleCallCustomer(job.customerPhone)}
                             >
                               <Phone className="w-4 h-4" /> Call
@@ -529,9 +563,17 @@ const VendorDashboard = () => {
                           <Button
                             className="w-full mt-3"
                             variant="default"
-                            onClick={() => handleUpdateStatus(job.id, job.status === "on_the_way" ? "arrived" : "completed")}
+                            onClick={() => {
+                              const nextStatus =
+                                job.status === "accepted" ? "on_the_way" :
+                                  job.status === "on_the_way" ? "in_progress" :
+                                    "completed";
+                              handleUpdateStatus(job.id, nextStatus);
+                            }}
                           >
-                            {job.status === "on_the_way" ? "Mark as Arrived" : "Complete Job"}
+                            {job.status === "accepted" ? "Start Journey" :
+                              job.status === "on_the_way" ? "Arrive & Start" :
+                                "Complete Job"}
                           </Button>
                         </div>
                       ))}
@@ -601,6 +643,15 @@ const VendorDashboard = () => {
           )}
         </div>
       </main >
+
+      {/* Booking Details Dialog (includes Chat & Negotiation) */}
+      <BookingDetailsDialog
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        booking={selectedBooking}
+        onUpdate={loadVendorData}
+        isVendorView={true}
+      />
     </div >
   );
 };

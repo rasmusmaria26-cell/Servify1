@@ -78,6 +78,7 @@ export async function fetchVendorBookings(vendorId: string): Promise<{
     }
 }
 
+
 /**
  * Update booking status
  */
@@ -94,6 +95,29 @@ export async function updateBookingStatus(
         if (error) throw error;
     } catch (error) {
         console.error("Error updating booking status:", error);
+        throw error;
+    }
+}
+
+/**
+ * Update negotiated price
+ */
+export async function updateBookingPrice(
+    bookingId: string,
+    price: number
+): Promise<void> {
+    try {
+        const { error } = await supabase
+            .from("bookings")
+            .update({
+                negotiated_price: price,
+                price_status: 'negotiating'
+            })
+            .eq("id", bookingId);
+
+        if (error) throw error;
+    } catch (error) {
+        console.error("Error updating booking price:", error);
         throw error;
     }
 }

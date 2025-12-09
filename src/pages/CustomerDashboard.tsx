@@ -88,6 +88,7 @@ const CustomerDashboard = () => {
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const [showBookingDetails, setShowBookingDetails] = useState(false);
   const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -186,7 +187,11 @@ const CustomerDashboard = () => {
     navigate("/");
   };
 
-  const activeBooking = bookings.find(b => b.status === "on_the_way" || b.status === "in_progress");
+  // Prioritize "on_the_way" or "in_progress", then "accepted", then "pending"
+  const activeBooking = bookings.find(b => ["on_the_way", "in_progress"].includes(b.status))
+    || bookings.find(b => b.status === "accepted")
+    || bookings.find(b => b.status === "pending");
+
   const recentBookings = bookings.slice(0, 3); // Show only 3 most recent
 
 
@@ -258,14 +263,14 @@ const CustomerDashboard = () => {
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 bg-opacity-80 backdrop-blur">
           <div className="flex items-center gap-3">
             {/* Mobile Sidebar Trigger */}
-            <Sheet>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden text-muted-foreground hover:text-foreground">
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-64 bg-card border-r border-border">
-                <SidebarContent />
+                <SidebarContent onClose={() => setIsMobileMenuOpen(false)} />
               </SheetContent>
             </Sheet>
             <h1 className="font-display text-lg sm:text-xl font-semibold capitalize truncate max-w-[150px] sm:max-w-none">
@@ -274,10 +279,7 @@ const CustomerDashboard = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
-              <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-            </button>
+
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
                 <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
@@ -314,7 +316,7 @@ const CustomerDashboard = () => {
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 gap-4 md:w-80">
                   {[
-                    { label: "Active Bookings", value: bookings.filter(b => ["accepted", "on_the_way", "in_progress"].includes(b.status)).length.toString(), icon: Clock },
+                    { label: "Active Bookings", value: bookings.filter(b => ["accepted", "on_the_way", "in_progress", "pending"].includes(b.status)).length.toString(), icon: Clock },
                     { label: "Completed", value: bookings.filter(b => b.status === "completed").length.toString(), icon: Star },
                     { label: "Total Spent", value: `₹${bookings.reduce((sum, b) => sum + (b.price || 0), 0).toLocaleString()}`, icon: CreditCard },
                     { label: "Total Bookings", value: bookings.length.toString(), icon: User },
@@ -347,7 +349,13 @@ const CustomerDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <p className="font-medium text-foreground">{activeBooking.service}</p>
-                        <p className="text-sm text-muted-foreground">{activeBooking.vendor} • ETA: 15 min</p>
+                        <p className="text-sm text-muted-foreground">
+                          {['on_the_way', 'in_progress'].includes(activeBooking.status)
+                            ? `${activeBooking.vendor} • ETA: 15 min`
+                            : activeBooking.status === "accepted"
+                              ? "Booking Confirmed - Waiting for Vendor"
+                              : "Waiting for Vendor Approval"}
+                        </p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[activeBooking.status as keyof typeof statusColors]}`}>
                         {statusLabels[activeBooking.status as keyof typeof statusLabels]}
@@ -407,13 +415,46 @@ const CustomerDashboard = () => {
           {/* Tracking Tab */}
           {activeTab === "tracking" && (
             activeBooking ? (
-              <LiveMap
-                vendorName={activeBooking.vendor}
-                vendorPhone={activeBooking.vendorPhone}
-                estimatedTime="15 min"
-                status="on_the_way"
-                customerAddress={activeBooking.address}
-              />
+              ['on_the_way', 'in_progress'].includes(activeBooking.status) ? (
+                <LiveMap
+                  vendorName={activeBooking.vendor}
+                  vendorPhone={activeBooking.vendorPhone}
+                  estimatedTime="15 min"
+                  status="on_the_way"
+                  customerAddress={activeBooking.address}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-2xl border border-border">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                    <Clock className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">
+                    {activeBooking.status === "accepted" ? "Booking Confirmed!" : "Pending Confirmation"}
+                  </h3>
+                  <p className="text-muted-foreground max-w-md mb-8">
+                    {activeBooking.status === "accepted"
+                      ? "Your booking is confirmed. Real-time tracking will become available once the vendor starts their journey to your location."
+                      : "We've received your booking request. You'll be notified as soon as a vendor accepts your request."}
+                  </p>
+
+                  <div className="bg-secondary/50 p-6 rounded-xl w-full max-w-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Service</span>
+                      <span className="font-medium">{activeBooking.service}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Vendor</span>
+                      <span className="font-medium">{activeBooking.vendor}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Status</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[activeBooking.status as keyof typeof statusColors]}`}>
+                        {statusLabels[activeBooking.status as keyof typeof statusLabels]}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-2xl border border-border">
                 <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
@@ -421,7 +462,7 @@ const CustomerDashboard = () => {
                 <p className="text-muted-foreground max-w-md">
                   You don't have any active services to track at the moment.
                 </p>
-                <Button variant="outline" className="mt-6" onClick={() => setActiveTab("services")}>
+                <Button variant="outline" className="mt-6" onClick={() => navigate("/services")}>
                   Book a Service
                 </Button>
               </div>
@@ -432,14 +473,14 @@ const CustomerDashboard = () => {
           {activeTab === "bookings" && (
             <div className="bg-card rounded-2xl border border-border">
               <div className="p-6 border-b border-border">
-                <h3 className="font-display text-lg font-semibold">All Bookings</h3>
+                <h3 className="font-display text-lg font-semibold">My Bookings</h3>
               </div>
               <div className="divide-y divide-border">
                 {isLoadingBookings ? (
                   <div className="p-6 text-center text-muted-foreground">Loading bookings...</div>
-                ) : bookings.length === 0 ? (
-                  <div className="p-6 text-center text-muted-foreground">No bookings yet</div>
-                ) : bookings.map((booking) => (
+                ) : bookings.filter(b => !['completed', 'cancelled', 'rejected'].includes(b.status)).length === 0 ? (
+                  <div className="p-6 text-center text-muted-foreground">No active bookings</div>
+                ) : bookings.filter(b => !['completed', 'cancelled', 'rejected'].includes(b.status)).map((booking) => (
                   <div
                     key={booking.id}
                     onClick={() => handleBookingClick(booking.id)}
@@ -447,6 +488,41 @@ const CustomerDashboard = () => {
                   >
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                       <booking.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{booking.service}</p>
+                      <p className="text-sm text-muted-foreground">{booking.vendor} • {booking.date}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[booking.status as keyof typeof statusColors]}`}>
+                      {statusLabels[booking.status as keyof typeof statusLabels]}
+                    </span>
+                    <p className="font-semibold text-foreground">₹{booking.price}</p>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Service History Tab */}
+          {activeTab === "history" && (
+            <div className="bg-card rounded-2xl border border-border">
+              <div className="p-6 border-b border-border">
+                <h3 className="font-display text-lg font-semibold">Service History</h3>
+              </div>
+              <div className="divide-y divide-border">
+                {isLoadingBookings ? (
+                  <div className="p-6 text-center text-muted-foreground">Loading history...</div>
+                ) : bookings.filter(b => ['completed', 'cancelled', 'rejected'].includes(b.status)).length === 0 ? (
+                  <div className="p-6 text-center text-muted-foreground">No past bookings found</div>
+                ) : bookings.filter(b => ['completed', 'cancelled', 'rejected'].includes(b.status)).map((booking) => (
+                  <div
+                    key={booking.id}
+                    onClick={() => handleBookingClick(booking.id)}
+                    className="p-6 flex items-center gap-4 hover:bg-secondary/50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                      <booking.icon className="w-6 h-6 text-gray-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground truncate">{booking.service}</p>
@@ -503,7 +579,7 @@ const CustomerDashboard = () => {
           )}
 
           {/* Other Tabs - Placeholder */}
-          {!["dashboard", "tracking", "bookings", "profile"].includes(activeTab) && (
+          {!["dashboard", "tracking", "bookings", "profile", "history"].includes(activeTab) && (
             <div className="bg-card rounded-2xl border border-border p-12 text-center">
               <h3 className="font-display text-xl font-semibold mb-2 capitalize">{activeTab}</h3>
               <p className="text-muted-foreground">This section is coming soon.</p>
@@ -524,3 +600,5 @@ const CustomerDashboard = () => {
 };
 
 export default CustomerDashboard;
+
+// Force rebuild for HMR
