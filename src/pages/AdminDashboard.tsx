@@ -20,6 +20,7 @@ import {
   Loader2,
   Download,
   File,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminVendors from "@/components/admin/AdminVendors";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
@@ -220,81 +222,106 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
+
+  // Extracted Sidebar Content
+  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+    <>
+      <div className="p-6 border-b border-border">
+        <Link to="/" className="flex items-center gap-2" onClick={onClose}>
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+            <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <span className="font-display text-lg font-bold block">Servify</span>
+            <span className="text-xs text-muted-foreground">Admin Panel</span>
+          </div>
+        </Link>
+      </div>
+
+      <nav className="flex-1 p-4">
+        <ul className="space-y-1">
+          {[
+            { icon: LayoutDashboard, label: "Overview", id: "dashboard" },
+            { icon: Users, label: "Users", id: "users" },
+            { icon: Briefcase, label: "Vendors", id: "vendors" },
+            { icon: FileText, label: "Bookings", id: "bookings" },
+            { icon: AlertTriangle, label: "Disputes", id: "disputes" },
+            { icon: BarChart3, label: "Analytics", id: "analytics" },
+            { icon: Settings, label: "Settings", id: "settings" },
+          ].map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (onClose) onClose();
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${activeTab === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="p-4 border-t border-border">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          Logout
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border">
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <span className="font-display text-lg font-bold block">Servify</span>
-              <span className="text-xs text-muted-foreground">Admin Panel</span>
-            </div>
-          </Link>
-        </div>
-
-        <nav className="flex-1 p-4">
-          <ul className="space-y-1">
-            {[
-              { icon: LayoutDashboard, label: "Overview", id: "dashboard" },
-              { icon: Users, label: "Users", id: "users" },
-              { icon: Briefcase, label: "Vendors", id: "vendors" },
-              { icon: FileText, label: "Bookings", id: "bookings" },
-              { icon: AlertTriangle, label: "Disputes", id: "disputes" },
-              { icon: BarChart3, label: "Analytics", id: "analytics" },
-              { icon: Settings, label: "Settings", id: "settings" },
-            ].map((item) => (
-              <li key={item.id}>
-                <button
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${activeTab === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                    }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="p-4 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Logout
-          </button>
-        </div>
+      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border fixed h-full">
+        <SidebarContent />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-          <div>
-            <h1 className="font-display text-xl font-semibold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground capitalize">{activeTab}</p>
+      <main className="flex-1 lg:pl-64 transition-all duration-300">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 bg-opacity-80 backdrop-blur">
+          <div className="flex items-center gap-3">
+            {/* Mobile Sidebar Trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden text-muted-foreground hover:text-foreground">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64 bg-card border-r border-border">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+            <div>
+              <h1 className="font-display text-lg sm:text-xl font-semibold">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground capitalize hidden sm:block">{activeTab}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-2 sm:gap-4">
             <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
               {pendingVendors.length > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
               )}
             </button>
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm">
               AD
             </div>
           </div>
         </header>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6 pb-20">
           {activeTab === 'dashboard' && (
             <>
               {/* Stats Grid */}

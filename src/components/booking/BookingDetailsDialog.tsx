@@ -11,11 +11,13 @@ import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { updateBookingStatus } from "@/services/bookingService";
 
 interface BookingDetailsDialogProps {
     booking: any;
     isOpen: boolean;
     onClose: () => void;
+    onUpdate?: () => void;
 }
 
 const statusColors = {
@@ -38,12 +40,37 @@ const statusLabels = {
     rejected: "Rejected",
 };
 
-export function BookingDetailsDialog({ booking, isOpen, onClose }: BookingDetailsDialogProps) {
+export function BookingDetailsDialog({ booking, isOpen, onClose, onUpdate }: BookingDetailsDialogProps) {
     const { toast } = useToast();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [existingReview, setExistingReview] = useState<any>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleCancelBooking = async () => {
+        setIsCancelling(true);
+        try {
+            await updateBookingStatus(booking.id, "cancelled");
+
+            toast({
+                title: "Booking Cancelled",
+                description: "Your booking has been cancelled successfully.",
+            });
+
+            if (onUpdate) onUpdate();
+            onClose();
+        } catch (error) {
+            console.error("Error cancelling booking:", error);
+            toast({
+                title: "Cancellation Failed",
+                description: "Could not cancel booking. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     // Reset state when dialog opens or booking changes
     useEffect(() => {
@@ -303,8 +330,20 @@ export function BookingDetailsDialog({ booking, isOpen, onClose }: BookingDetail
                     {/* Actions */}
                     <div className="flex gap-3 pt-4 border-t">
                         {booking.status === "pending" && (
-                            <Button variant="destructive" className="flex-1">
-                                Cancel Booking
+                            <Button
+                                variant="destructive"
+                                className="flex-1"
+                                onClick={handleCancelBooking}
+                                disabled={isCancelling}
+                            >
+                                {isCancelling ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Cancelling...
+                                    </>
+                                ) : (
+                                    "Cancel Booking"
+                                )}
                             </Button>
                         )}
                         {(booking.status === "on_the_way" || booking.status === "in_progress") && (

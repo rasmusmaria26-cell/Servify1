@@ -19,6 +19,7 @@ import {
   CreditCard,
   Settings,
   HelpCircle,
+  Menu,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LiveMap from "@/components/tracking/LiveMap";
@@ -26,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { fetchCustomerBookings } from "@/services/bookingService";
 import { BookingDetailsDialog } from "@/components/booking/BookingDetailsDialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const recentBookings = [
   {
@@ -187,76 +189,98 @@ const CustomerDashboard = () => {
   const activeBooking = bookings.find(b => b.status === "on_the_way" || b.status === "in_progress");
   const recentBookings = bookings.slice(0, 3); // Show only 3 most recent
 
+
+  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+    <>
+      <div className="p-6 border-b border-border">
+        <Link to="/" className="flex items-center gap-2" onClick={onClose}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+            <Home className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-display text-xl font-bold">Servify</span>
+        </Link>
+      </div>
+
+      <nav className="flex-1 p-4">
+        <ul className="space-y-1">
+          {[
+            { icon: Home, label: "Dashboard", id: "dashboard" },
+            { icon: Calendar, label: "My Bookings", id: "bookings" },
+            { icon: MapPin, label: "Track Service", id: "tracking" },
+            { icon: Clock, label: "Service History", id: "history" },
+            { icon: CreditCard, label: "Payments", id: "payments" },
+            { icon: MessageSquare, label: "Messages", id: "messages" },
+            { icon: User, label: "Profile", id: "profile" },
+            { icon: Settings, label: "Settings", id: "settings" },
+            { icon: HelpCircle, label: "Help & Support", id: "help" },
+          ].map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={() => {
+                  handleTabChange(item.id);
+                  if (onClose) onClose();
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${activeTab === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="p-4 border-t border-border">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          Logout
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border">
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-              <Home className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold">Servify</span>
-          </Link>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-1">
-            {[
-              { icon: Home, label: "Dashboard", id: "dashboard" },
-              { icon: Calendar, label: "My Bookings", id: "bookings" },
-              { icon: MapPin, label: "Track Service", id: "tracking" },
-              { icon: Clock, label: "Service History", id: "history" },
-              { icon: CreditCard, label: "Payments", id: "payments" },
-              { icon: MessageSquare, label: "Messages", id: "messages" },
-              { icon: User, label: "Profile", id: "profile" },
-              { icon: Settings, label: "Settings", id: "settings" },
-              { icon: HelpCircle, label: "Help & Support", id: "help" },
-            ].map((item) => (
-              <li key={item.id}>
-                <button
-                  onClick={() => handleTabChange(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${activeTab === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                    }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Logout */}
-        <div className="p-4 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Logout
-          </button>
-        </div>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border fixed h-full">
+        <SidebarContent />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 lg:pl-64 transition-all duration-300">
         {/* Top Bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-          <h1 className="font-display text-xl font-semibold capitalize">{activeTab}</h1>
-          <div className="flex items-center gap-4">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 bg-opacity-80 backdrop-blur">
+          <div className="flex items-center gap-3">
+            {/* Mobile Sidebar Trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden text-muted-foreground hover:text-foreground">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64 bg-card border-r border-border">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+            <h1 className="font-display text-lg sm:text-xl font-semibold capitalize truncate max-w-[150px] sm:max-w-none">
+              {activeTab}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
             <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
             </button>
             <div className="flex items-center gap-3">
-              {/* Profile avatar */}
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-                <User className="w-6 h-6 text-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <div className="hidden sm:block">
                 <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
@@ -267,7 +291,7 @@ const CustomerDashboard = () => {
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6 pb-20">
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <>
@@ -493,6 +517,7 @@ const CustomerDashboard = () => {
         booking={selectedBookingDetails}
         isOpen={showBookingDetails}
         onClose={() => setShowBookingDetails(false)}
+        onUpdate={fetchProfile}
       />
     </div>
   );

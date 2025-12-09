@@ -64,12 +64,35 @@ const BookService = () => {
 
   const selectedVendorData = vendors.find((v) => v.id === selectedVendor);
 
+  // Check for authentication
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please login to book a service",
+        });
+        navigate("/login/customer");
+        return; // Stay in loading state until redirect happens
+      }
+      setIsAuthChecking(false);
+    };
+    checkAuth();
+  }, [navigate, toast]);
+
   // Fetch vendors when reaching step 3
   useEffect(() => {
     if (currentStep === 3 && serviceId) {
       loadVendors();
     }
   }, [currentStep, serviceId]);
+
+  if (false) { // Placeholder to remove the block without invalidating line numbers if possible, or just remove it.
+    // Actually, I'll just remove the block.
+  }
 
   const loadVendors = async () => {
     if (!serviceId) return;
@@ -401,6 +424,14 @@ const BookService = () => {
       setIsListening(false);
     }
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
