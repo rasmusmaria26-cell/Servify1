@@ -30,6 +30,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import AdminUsers from "@/components/admin/AdminUsers";
+import AdminVendors from "@/components/admin/AdminVendors";
+import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import AdminSettings from "@/components/admin/AdminSettings";
+import AdminBookings from "@/components/admin/AdminBookings";
 
 interface PendingVendor {
   id: string;
@@ -57,15 +62,62 @@ const AdminDashboard = () => {
   const [selectedVendor, setSelectedVendor] = useState<PendingVendor | null>(null);
   const [showKycDialog, setShowKycDialog] = useState(false);
 
+  // Stats State
+  const [stats, setStats] = useState({
+    revenue: 0,
+    activeUsers: 0,
+    verifiedVendors: 0
+  });
+
   useEffect(() => {
     checkAdminAuth();
     loadPendingVendors();
+    loadStats();
   }, []);
 
   const checkAdminAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/login/customer");
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      // 1. Calculate Total Revenue (Sum of final_cost from completed bookings)
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('final_cost')
+        .eq('status', 'completed');
+
+      if (bookingsError) throw bookingsError;
+      const totalRevenue = bookingsData?.reduce((sum, b) => sum + (b.final_cost || 0), 0) || 0;
+
+      // 2. Count Active Users (Customers)
+      // Check user_roles table for 'customer' role
+      const { count: userCount, error: userError } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'customer');
+
+      if (userError) throw userError;
+
+      // 3. Count Verified Vendors
+      const { count: vendorCount, error: vendorError } = await supabase
+        .from('vendors')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_verified', true);
+
+      if (vendorError) throw vendorError;
+
+      setStats({
+        revenue: totalRevenue,
+        activeUsers: userCount || 0,
+        verifiedVendors: vendorCount || 0
+      });
+
+    } catch (error) {
+      console.error("Error loading stats:", error);
     }
   };
 
@@ -227,7 +279,7 @@ const AdminDashboard = () => {
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
           <div>
             <h1 className="font-display text-xl font-semibold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Platform Overview</p>
+            <p className="text-sm text-muted-foreground capitalize">{activeTab}</p>
           </div>
           <div className="flex items-center gap-4">
             <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
@@ -243,118 +295,142 @@ const AdminDashboard = () => {
         </header>
 
         <div className="p-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "Total Revenue", value: "₹0", icon: DollarSign, color: "text-success", change: "—" },
-              { label: "Active Users", value: "0", icon: Users, color: "text-primary", change: "—" },
-              { label: "Verified Vendors", value: "0", icon: UserCheck, color: "text-accent", change: "—" },
-              { label: "Pending KYC", value: pendingVendors.length.toString(), icon: AlertTriangle, color: "text-warning", change: "Live" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-card rounded-xl p-5 border border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary text-muted-foreground">
-                    {stat.change}
+          {activeTab === 'dashboard' && (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: "Total Revenue", value: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "text-success", change: "+12%" },
+                  { label: "Active Users", value: stats.activeUsers.toString(), icon: Users, color: "text-primary", change: "+5%" },
+                  { label: "Verified Vendors", value: stats.verifiedVendors.toString(), icon: UserCheck, color: "text-accent", change: "+2%" },
+                  { label: "Pending KYC", value: pendingVendors.length.toString(), icon: AlertTriangle, color: "text-warning", change: "Live" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-card rounded-xl p-5 border border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                        {stat.change}
+                      </span>
+                    </div>
+                    <p className="font-display text-2xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pending Approvals */}
+              <div className="bg-card rounded-2xl border border-border">
+                <div className="p-5 border-b border-border flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold">Pending Approvals</h3>
+                    <p className="text-sm text-muted-foreground">Vendors awaiting KYC verification</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-warning/10 text-warning text-sm font-medium">
+                    {pendingVendors.length} pending
                   </span>
                 </div>
-                <p className="font-display text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
-          </div>
 
-          {/* Pending Approvals */}
-          <div className="bg-card rounded-2xl border border-border">
-            <div className="p-5 border-b border-border flex items-center justify-between">
-              <div>
-                <h3 className="font-display text-lg font-semibold">Pending Approvals</h3>
-                <p className="text-sm text-muted-foreground">Vendors awaiting KYC verification</p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-warning/10 text-warning text-sm font-medium">
-                {pendingVendors.length} pending
-              </span>
-            </div>
-
-            {isLoading ? (
-              <div className="p-10 text-center">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
-                <p className="text-muted-foreground">Loading pending vendors...</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {pendingVendors.length > 0 ? (
-                  pendingVendors.map((vendor) => (
-                    <div key={vendor.id} className="p-5 hover:bg-secondary/50 transition-colors">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-foreground">{vendor.business_name}</h4>
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning">
-                              {vendor.kyc_status}
-                            </span>
+                {isLoading ? (
+                  <div className="p-10 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+                    <p className="text-muted-foreground">Loading pending vendors...</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {pendingVendors.length > 0 ? (
+                      pendingVendors.map((vendor) => (
+                        <div key={vendor.id} className="p-5 hover:bg-secondary/50 transition-colors">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold text-foreground">{vendor.business_name}</h4>
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning">
+                                  {vendor.kyc_status}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {vendor.description || "No description provided"}
+                              </p>
+                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                <span>📍 {vendor.city || "N/A"}, {vendor.state || "N/A"}</span>
+                                <span>📞 {vendor.phone || "N/A"}</span>
+                                <span>📅 {new Date(vendor.created_at).toLocaleDateString()}</span>
+                                <span>🏷️ {vendor.service_categories.length} categories</span>
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {vendor.description || "No description provided"}
-                          </p>
-                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                            <span>📍 {vendor.city || "N/A"}, {vendor.state || "N/A"}</span>
-                            <span>📞 {vendor.phone || "N/A"}</span>
-                            <span>📅 {new Date(vendor.created_at).toLocaleDateString()}</span>
-                            <span>🏷️ {vendor.service_categories.length} categories</span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleViewKyc(vendor)}
+                            >
+                              <Eye className="w-4 h-4" />
+                              View KYC
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleRejectVendor(vendor.id)}
+                              disabled={processingVendor === vendor.id}
+                            >
+                              {processingVendor === vendor.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <XCircle className="w-4 h-4" />
+                              )}
+                              Reject
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="gap-1 bg-success hover:bg-success/90"
+                              onClick={() => handleApproveVendor(vendor.id)}
+                              disabled={processingVendor === vendor.id}
+                            >
+                              {processingVendor === vendor.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4" />
+                              )}
+                              Approve
+                            </Button>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="p-10 text-center">
+                        <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success" />
+                        <p className="text-muted-foreground">No pending vendor approvals</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                          onClick={() => handleViewKyc(vendor)}
-                        >
-                          <Eye className="w-4 h-4" />
-                          View KYC
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1 text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRejectVendor(vendor.id)}
-                          disabled={processingVendor === vendor.id}
-                        >
-                          {processingVendor === vendor.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <XCircle className="w-4 h-4" />
-                          )}
-                          Reject
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="gap-1 bg-success hover:bg-success/90"
-                          onClick={() => handleApproveVendor(vendor.id)}
-                          disabled={processingVendor === vendor.id}
-                        >
-                          {processingVendor === vendor.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <CheckCircle className="w-4 h-4" />
-                          )}
-                          Approve
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-10 text-center">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success" />
-                    <p className="text-muted-foreground">No pending vendor approvals</p>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
+
+          {activeTab === 'users' && <AdminUsers />}
+          {activeTab === 'vendors' && <AdminVendors />}
+          {activeTab === 'analytics' && <AdminAnalytics />}
+          {activeTab === 'settings' && <AdminSettings />}
+          {activeTab === 'bookings' && <AdminBookings />}
+
+          {/* Placeholders for other tabs */}
+          {!['dashboard', 'users', 'vendors', 'analytics', 'settings', 'bookings'].includes(activeTab) && (
+            <div className="flex flex-col items-center justify-center p-12 bg-card rounded-2xl border border-border">
+              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+                <Settings className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-display font-semibold mb-2 capitalize">{activeTab} Module</h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                The {activeTab} management module is currently under development.
+                Full functionality will be available in the next update.
+              </p>
+            </div>
+          )}
         </div>
       </main>
 

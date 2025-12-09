@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -57,6 +58,7 @@ const categoryColors: Record<string, string> = {
 };
 
 const Services = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -86,8 +88,8 @@ const Services = () => {
       console.error("Error loading data:", err);
       setError("Failed to load services. Please try again.");
       toast({
-        title: "Error loading services",
-        description: "Unable to fetch services. Please refresh the page.",
+        title: t('servicesPage.alert_error_title'),
+        description: t('servicesPage.alert_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -111,10 +113,10 @@ const Services = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
-                Find the Right Service
+                {t('servicesPage.title')}
               </h1>
               <p className="text-primary-foreground/80 text-lg mb-8">
-                Browse through our wide range of services and find verified experts near you.
+                {t('servicesPage.subtitle')}
               </p>
 
               {/* Search Bar */}
@@ -122,14 +124,14 @@ const Services = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    placeholder="Search services..."
+                    placeholder={t('servicesPage.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-12 h-12 bg-card text-foreground border-0"
                   />
                 </div>
                 <Button size="lg" className="h-12 gap-2">
-                  <Filter className="w-4 h-4" /> Filter
+                  <Filter className="w-4 h-4" /> {t('servicesPage.filter')}
                 </Button>
               </div>
             </div>
@@ -180,10 +182,10 @@ const Services = () => {
             {error && !isLoading && (
               <div className="text-center py-16">
                 <AlertCircle className="w-16 h-16 mx-auto text-destructive mb-4" />
-                <h3 className="font-semibold text-lg mb-2">Failed to Load Services</h3>
+                <h3 className="font-semibold text-lg mb-2">{t('servicesPage.alert_error_title')}</h3>
                 <p className="text-muted-foreground mb-4">{error}</p>
                 <Button onClick={loadData} variant="outline">
-                  Try Again
+                  {t('servicesPage.try_again')}
                 </Button>
               </div>
             )}
@@ -227,7 +229,7 @@ const Services = () => {
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-xs text-muted-foreground">Starting from</span>
+                            <span className="text-xs text-muted-foreground">{t('servicesPage.startingFrom')}</span>
                             <p className="font-display font-bold text-lg text-foreground">
                               ₹{service.base_price?.toLocaleString() || 'TBD'}
                             </p>
@@ -245,7 +247,7 @@ const Services = () => {
 
             {!isLoading && !error && filteredServices.length === 0 && (
               <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No services found matching your search.</p>
+                <p className="text-muted-foreground text-lg">{t('servicesPage.no_services')}</p>
               </div>
             )}
           </div>

@@ -19,11 +19,13 @@ import {
   Loader2,
   Lock,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PaymentModal from "@/components/payment/PaymentModal";
 import ImageUpload from "@/components/booking/ImageUpload";
+import LocationPicker from "@/components/map/LocationPicker";
 import { analyzeIssue, DiagnosisResult } from "@/services/ai";
 import { fetchVendorsByService, Vendor } from "@/services/vendorService";
 
@@ -49,6 +51,7 @@ const BookService = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [address, setAddress] = useState("");
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +101,7 @@ const BookService = () => {
   };
 
   // Handle going to next step (Step 1 -> Step 2)
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!issueDescription.trim()) {
       toast({
         title: "Description required",
@@ -108,13 +111,54 @@ const BookService = () => {
       return;
     }
 
+    // Upload images if any
+    let uploadedUrls: string[] = [];
+    if (uploadedImages.length > 0) {
+      setIsSubmitting(true);
+      try {
+        const { uploadIssueImage } = await import("@/services/storageService");
+
+        toast({
+          title: "Uploading images...",
+          description: `Uploading ${uploadedImages.length} images. Please wait.`,
+        });
+
+        const uploadPromises = uploadedImages.map(file => uploadIssueImage(file));
+        uploadedUrls = await Promise.all(uploadPromises);
+
+        console.log("Images uploaded successfully:", uploadedUrls);
+        toast({
+          title: "Upload complete",
+          description: "Images uploaded successfully.",
+        });
+      } catch (error: any) {
+        console.error("Error uploading images:", error);
+        toast({
+          title: "Upload failed",
+          description: error.message || "Failed to upload images. Proceeding without them.",
+          variant: "destructive",
+        });
+        // We proceed even if upload fails, or you could return; to block
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
     console.log("Proceeding to AI analysis step");
     console.log("Issue description:", issueDescription);
     console.log("Uploaded images:", uploadedImages.length);
+    console.log("Uploaded URLs:", uploadedUrls);
+
+    // Save uploaded URLs to state to be used in booking creation
+    // We'll store them in a temporary property on the diagnosisResult or just use a ref/state
+    // For now, let's add a state for it
+    setUploadedImageUrls(uploadedUrls);
 
     // Save data and proceed
     setCurrentStep(2);
   };
+
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   // AI Analysis
   const handleAnalyze = async () => {
@@ -177,9 +221,12 @@ const BookService = () => {
           vendor_id: selectedVendor,
           service_id: serviceId,
           issue_description: issueDescription,
+          issue_images: uploadedImageUrls,
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           address: address,
+          latitude: coordinates?.lat,
+          longitude: coordinates?.lng,
           status: "pending",
           payment_status: "pending", // Will be 'paid' when Razorpay is enabled
           ai_diagnosis: diagnosisResult ? JSON.parse(JSON.stringify(diagnosisResult)) : null,
@@ -210,9 +257,22 @@ const BookService = () => {
     }
   };
 
+  /* Camera Logic */
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCameraOpen(false);
+  };
+
   const handleTakePhoto = async () => {
     try {
-      // Check if camera is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast({
           title: "Camera not available",
@@ -222,16 +282,20 @@ const BookService = () => {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      // In a real app, you'd open a camera modal here
-      stream.getTracks().forEach(track => track.stop());
+      setIsCameraOpen(true);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setStream(mediaStream);
 
-      toast({
-        title: "Camera access granted",
-        description: "Camera feature coming soon. Please use file upload for now.",
-      });
+      // Small timeout to allow modal to render before attaching stream
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
+
     } catch (error) {
       console.error("Camera error:", error);
+      setIsCameraOpen(false);
       toast({
         title: "Camera access denied",
         description: "Please allow camera access or use file upload.",
@@ -240,8 +304,45 @@ const BookService = () => {
     }
   };
 
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+
+      if (context) {
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to blob/file
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const fileName = `camera_capture_${Date.now()}.jpg`;
+            const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+            // Add to uploaded images
+            setUploadedImages(prev => [...prev, file]);
+
+            toast({
+              title: "Photo captured",
+              description: "Image added successfully.",
+            });
+
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.8);
+      }
+    }
+  };
+
+  /* Voice Logic */
+  const [isListening, setIsListening] = useState(false);
+
   const handleVoiceInput = () => {
-    // Check for speech recognition support
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
@@ -253,33 +354,52 @@ const BookService = () => {
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-IN";
-    recognition.interimResults = false;
+    if (isListening) return; // Prevent multiple starts
 
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setIssueDescription((prev) => prev + " " + transcript);
-      toast({
-        title: "Voice captured",
-        description: "Your voice input has been added to the description.",
-      });
-    };
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.interimResults = false;
+      recognition.continuous = false; // Stop after one sentence/pause
 
-    recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
-      toast({
-        title: "Voice input failed",
-        description: "Please try again or type your issue.",
-        variant: "destructive",
-      });
-    };
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast({
+          title: "Listening...",
+          description: "Speak clearly to describe your issue.",
+        });
+      };
 
-    recognition.start();
-    toast({
-      title: "Listening...",
-      description: "Speak now to describe your issue.",
-    });
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setIssueDescription((prev) => (prev ? prev + " " + transcript : transcript));
+          toast({
+            title: "Voice captured",
+            description: "Text added to description.",
+          });
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+        toast({
+          title: "Voice input failed",
+          description: "Could not hear you. Please try again.",
+          variant: "destructive",
+        });
+      };
+
+      recognition.start();
+    } catch (error) {
+      console.error("Voice start error:", error);
+      setIsListening(false);
+    }
   };
 
   return (
@@ -358,11 +478,51 @@ const BookService = () => {
                     <Button variant="outline" className="gap-2" onClick={handleTakePhoto}>
                       <Camera className="w-4 h-4" /> Take Photo
                     </Button>
-                    <Button variant="outline" className="gap-2" onClick={handleVoiceInput}>
-                      <Mic className="w-4 h-4" /> Voice Input
+                    <Button
+                      variant={isListening ? "default" : "outline"}
+                      className={`gap-2 ${isListening ? "animate-pulse" : ""}`}
+                      onClick={handleVoiceInput}
+                    >
+                      {isListening ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-red-500" /> Stop Listening
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-4 h-4" /> Voice Input
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
+
+                {/* Camera Modal */}
+                {isCameraOpen && (
+                  <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-card rounded-2xl border border-border overflow-hidden max-w-lg w-full relative">
+                      <div className="p-4 border-b border-border flex justify-between items-center bg-muted/40">
+                        <h3 className="font-semibold">Take Photo</h3>
+                        <Button variant="ghost" size="icon" onClick={stopCamera} className="w-8 h-8 rounded-full">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="relative aspect-video bg-black flex items-center justify-center">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4 flex justify-center bg-muted/40">
+                        <Button onClick={capturePhoto} className="w-12 h-12 rounded-full p-0 flex items-center justify-center border-4 border-background shadow-lg">
+                          <div className="w-10 h-10 rounded-full bg-white transition-transform active:scale-90" />
+                        </Button>
+                      </div>
+                      <canvas ref={canvasRef} className="hidden" />
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-between mt-8">
                   {/* Optional AI Analysis - Secondary */}
@@ -581,14 +741,27 @@ const BookService = () => {
                 </div>
 
                 <div className="mt-6">
-                  <Label htmlFor="address">Service Address</Label>
-                  <Textarea
-                    id="address"
-                    placeholder="Enter your complete address..."
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="mt-2"
+                  <Label htmlFor="address" className="block mb-2">Service Address</Label>
+                  {/* Replaced textarea with LocationPicker */}
+                  <LocationPicker
+                    onLocationSelect={(loc) => {
+                      setAddress(loc.address);
+                      setCoordinates({ lat: loc.lat, lng: loc.lng });
+                    }}
+                    initialLocation={coordinates || undefined}
                   />
+
+                  <div className="mt-4">
+                    <Label htmlFor="address-input">Full Address</Label>
+                    <Textarea
+                      id="address-input"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Address will appear here. You can also type it manually."
+                      className="mt-2 text-sm"
+                      rows={3}
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-between mt-8">
@@ -596,8 +769,33 @@ const BookService = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
                   <Button
-                    onClick={() => setCurrentStep(5)}
-                    disabled={!selectedDate || !selectedTime || !address}
+                    onClick={() => {
+                      if (!selectedDate) {
+                        toast({
+                          title: "Date missing",
+                          description: "Please select a preferred date for the service.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      if (!selectedTime) {
+                        toast({
+                          title: "Time missing",
+                          description: "Please select a preferred time for the service.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      if (!address) {
+                        toast({
+                          title: "Address missing",
+                          description: "Please select an address on the map.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setCurrentStep(5);
+                    }}
                   >
                     Review Booking <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -701,9 +899,9 @@ const BookService = () => {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onSuccess={handlePaymentSuccess}
-        amount={selectedVendorData?.price || 0}
+        amount={selectedVendorData?.hourly_rate || 0}
         serviceName="Mobile Screen Repair"
-        vendorName={selectedVendorData?.name || ""}
+        vendorName={selectedVendorData?.business_name || ""}
       />
     </div>
   );

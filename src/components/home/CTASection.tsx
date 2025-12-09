@@ -2,7 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, UserPlus, Briefcase } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 const CTASection = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -15,15 +19,14 @@ const CTASection = () => {
                 <UserPlus className="w-7 h-7 text-primary-foreground" />
               </div>
               <h3 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
-                Need a Service?
+                {t('cta.customer_title')}
               </h3>
               <p className="text-primary-foreground/80 mb-8 max-w-md">
-                Sign up as a customer and get access to thousands of verified service
-                providers. Book instantly, track in real-time, and pay securely.
+                {t('cta.customer_desc')}
               </p>
               <Button asChild size="lg" variant="hero">
                 <Link to="/signup">
-                  Get Started <ArrowRight className="w-5 h-5" />
+                  {t('cta.customer_btn')} <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
             </div>
@@ -37,15 +40,14 @@ const CTASection = () => {
                 <Briefcase className="w-7 h-7 text-accent-foreground" />
               </div>
               <h3 className="font-display text-2xl md:text-3xl font-bold text-accent-foreground mb-4">
-                Are You a Service Provider?
+                {t('cta.vendor_title')}
               </h3>
               <p className="text-accent-foreground/80 mb-8 max-w-md">
-                Join our network of verified vendors. Get more customers, manage bookings
-                easily, and grow your business with our tools.
+                {t('cta.vendor_desc')}
               </p>
               <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 <Link to="/signup?role=vendor">
-                  Join as Vendor <ArrowRight className="w-5 h-5" />
+                  {t('cta.vendor_btn')} <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
             </div>

@@ -123,7 +123,8 @@ const CustomerDashboard = () => {
       const allBookings = [...active, ...scheduled, ...completed].map((booking: any) => ({
         id: booking.id,
         service: booking.service?.name || "Service",
-        vendor: "Vendor",
+        vendor: booking.vendor?.business_name || "Vendor",
+        vendor_id: booking.vendor_id, // Critical for reviews
         status: booking.status,
         date: new Date(booking.scheduled_date).toLocaleDateString(),
         time: booking.scheduled_time,

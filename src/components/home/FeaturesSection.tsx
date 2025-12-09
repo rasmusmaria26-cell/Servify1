@@ -1,60 +1,64 @@
 import { Brain, MapPin, Shield, Mic, Box, Smartphone } from "lucide-react";
 
-const features = [
-  {
-    icon: Brain,
-    title: "AI-Powered Diagnosis",
-    description: "Upload images or describe your issue. Our AI analyzes and provides instant fault diagnosis with estimated repair costs.",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    icon: MapPin,
-    title: "Real-Time Tracking",
-    description: "Track your service provider's location live on the map. Get status updates from booking to completion.",
-    color: "bg-success/10 text-success",
-  },
-  {
-    icon: Shield,
-    title: "Blockchain History",
-    description: "All repairs logged immutably. Access tamper-proof service records, warranty info, and device history anytime.",
-    color: "bg-accent/10 text-accent",
-  },
-  {
-    icon: Mic,
-    title: "Voice & Multi-Language",
-    description: "Book services in your preferred language using voice commands. Designed for inclusive access across India.",
-    color: "bg-warning/10 text-warning",
-  },
-  {
-    icon: Box,
-    title: "AR Self-Help Guides",
-    description: "Try DIY repairs with AR-guided tutorials. Step-by-step 3D instructions for common fixes.",
-    color: "bg-electronics/10 text-electronics",
-  },
-  {
-    icon: Smartphone,
-    title: "Multi-Domain Services",
-    description: "One platform for all your needs – electronics, vehicles, home appliances, plumbing, and electrical work.",
-    color: "bg-destructive/10 text-destructive",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const FeaturesSection = () => {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: Brain,
+      title: t('features.ai_diagnosis_title'),
+      description: t('features.ai_diagnosis_desc'),
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      icon: MapPin,
+      title: t('features.tracking_title'),
+      description: t('features.tracking_desc'),
+      color: "bg-success/10 text-success",
+    },
+    {
+      icon: Shield,
+      title: t('features.blockchain_title'),
+      description: t('features.blockchain_desc'),
+      color: "bg-accent/10 text-accent",
+    },
+    {
+      icon: Mic,
+      title: t('features.voice_title'),
+      description: t('features.voice_desc'),
+      color: "bg-warning/10 text-warning",
+    },
+    {
+      icon: Box,
+      title: t('features.ar_title'),
+      description: t('features.ar_desc'),
+      color: "bg-electronics/10 text-electronics",
+    },
+    {
+      icon: Smartphone,
+      title: t('features.multi_domain_title'),
+      description: t('features.multi_domain_desc'),
+      color: "bg-destructive/10 text-destructive",
+    },
+  ];
+
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Why Choose Servify
+            {t('features.badge')}
           </span>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Technology That{" "}
-            <span className="text-gradient-primary">Empowers</span> You
+            {t('features.title_part1')}{" "}
+            <span className="text-gradient-primary">{t('features.title_empower')}</span>{" "}
+            {t('features.title_part2')}
           </h2>
           <p className="text-muted-foreground text-lg">
-            We combine cutting-edge AI, real-time tracking, and inclusive design 
-            to deliver a service experience like never before.
+            {t('features.subtitle')}
           </p>
         </div>
 

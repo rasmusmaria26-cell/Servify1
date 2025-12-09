@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Smartphone, Car, Home, Shield, MapPin, Mic, Sparkles, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Animated Background Orbs */}
@@ -50,25 +52,24 @@ const HeroSection = () => {
           >
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium text-foreground/80">
-              AI-Powered Service Platform
+              {t('hero.badge_text')}
             </span>
             <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-              NEW
+              {t('hero.badge_new')}
             </span>
           </motion.div>
 
-          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
             className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.1] mb-6"
           >
-            <span className="text-foreground">From Gadgets</span>
+            <span className="text-foreground">{t('hero.title_line1')}</span>
             <br />
-            <span className="text-foreground">to Garage to</span>
+            <span className="text-foreground">{t('hero.title_line2')}</span>
             <br />
-            <span className="text-gradient-primary neon-text">Home</span>
+            <span className="text-gradient-primary neon-text">{t('hero.title_line3')}</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -78,8 +79,7 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            Verified local help at your fingertips. AI-powered fault diagnosis, 
-            real-time tracking, and transparent service history – all in one platform.
+            {t('hero.subtitle')}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -91,14 +91,14 @@ const HeroSection = () => {
           >
             <Button asChild size="xl" variant="hero" className="group">
               <Link to="/services">
-                Book a Service 
+                {t('hero.cta_book')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
             <Button asChild size="xl" variant="hero-outline">
               <Link to="/signup?role=vendor">
                 <Zap className="w-5 h-5" />
-                Become a Vendor
+                {t('hero.cta_vendor')}
               </Link>
             </Button>
           </motion.div>
@@ -111,22 +111,22 @@ const HeroSection = () => {
             className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-20"
           >
             {[
-              { 
-                icon: Smartphone, 
-                label: "Electronics", 
-                desc: "Phones, Laptops, Gadgets",
+              {
+                icon: Smartphone,
+                label: t('services.electronics'),
+                desc: t('services.electronics_desc'),
                 gradient: "from-primary to-secondary-blue"
               },
-              { 
-                icon: Car, 
-                label: "Mechanical", 
-                desc: "Cars, Bikes, Vehicles",
+              {
+                icon: Car,
+                label: t('services.mechanical'),
+                desc: t('services.mechanical_desc'),
                 gradient: "from-accent to-success"
               },
-              { 
-                icon: Home, 
-                label: "Home Services", 
-                desc: "Appliances, Plumbing, AC",
+              {
+                icon: Home,
+                label: t('services.home'),
+                desc: t('services.home_desc'),
                 gradient: "from-home-services to-primary"
               },
             ].map(({ icon: Icon, label, desc, gradient }) => (
@@ -159,10 +159,10 @@ const HeroSection = () => {
             className="flex flex-wrap justify-center gap-8 text-muted-foreground"
           >
             {[
-              { icon: Shield, text: "KYC Verified Vendors" },
-              { icon: MapPin, text: "Real-time Tracking" },
-              { icon: Mic, text: "Voice Booking" },
-              { icon: Sparkles, text: "AI Diagnosis" },
+              { icon: Shield, text: t('hero.feature_kyc') },
+              { icon: MapPin, text: t('hero.feature_tracking') },
+              { icon: Mic, text: t('hero.feature_voice') },
+              { icon: Sparkles, text: t('hero.feature_ai') },
             ].map(({ icon: Icon, text }) => (
               <motion.div
                 key={text}

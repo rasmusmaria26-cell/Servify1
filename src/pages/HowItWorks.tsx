@@ -2,6 +2,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   UserCheck,
@@ -16,105 +17,101 @@ import {
   Clock,
 } from "lucide-react";
 
-const steps = [
-  {
-    number: "01",
-    icon: Search,
-    title: "Describe Your Problem",
-    description:
-      "Tell us what needs fixing using text, images, or voice. Our AI analyzes your input to understand the issue and provide an initial diagnosis.",
-    details: [
-      "Upload photos or videos of the issue",
-      "Use voice input in your preferred language",
-      "Get AI-powered fault estimation",
-    ],
-  },
-  {
-    number: "02",
-    icon: UserCheck,
-    title: "Choose Your Expert",
-    description:
-      "Browse through verified service providers filtered by location, ratings, expertise, and price. View detailed profiles and customer reviews.",
-    details: [
-      "All vendors are KYC verified",
-      "See real customer ratings & reviews",
-      "Compare prices and expertise",
-    ],
-  },
-  {
-    number: "03",
-    icon: Clock,
-    title: "Schedule & Track",
-    description:
-      "Book a convenient time slot and track your service provider in real-time on the map. Get status updates at every step.",
-    details: [
-      "Flexible scheduling options",
-      "Live GPS tracking on map",
-      "Real-time status notifications",
-    ],
-  },
-  {
-    number: "04",
-    icon: Wrench,
-    title: "Service Completed",
-    description:
-      "Your expert arrives and completes the service. All work is logged transparently with photos and notes for your records.",
-    details: [
-      "Transparent work documentation",
-      "Before & after photos",
-      "Detailed service report",
-    ],
-  },
-  {
-    number: "05",
-    icon: CreditCard,
-    title: "Secure Payment",
-    description:
-      "Pay securely through the app using multiple payment options. Your payment is released to the vendor only after service completion.",
-    details: [
-      "Multiple payment options",
-      "Secure escrow system",
-      "Digital invoices & receipts",
-    ],
-  },
-  {
-    number: "06",
-    icon: Star,
-    title: "Rate & Review",
-    description:
-      "Share your experience to help others make informed decisions. Your feedback helps maintain quality across the platform.",
-    details: [
-      "Rate your service experience",
-      "Help improve vendor quality",
-      "Build community trust",
-    ],
-  },
-];
-
-const features = [
-  {
-    icon: Shield,
-    title: "Verified Vendors",
-    description: "All service providers undergo KYC verification for your safety.",
-  },
-  {
-    icon: MapPin,
-    title: "Real-Time Tracking",
-    description: "Track your vendor's location live on the map.",
-  },
-  {
-    icon: MessageSquare,
-    title: "In-App Chat",
-    description: "Communicate directly with your service provider.",
-  },
-  {
-    icon: Smartphone,
-    title: "Multi-Language",
-    description: "Book services in your preferred language.",
-  },
-];
-
 const HowItWorks = () => {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      number: "01",
+      icon: Search,
+      title: t('howItWorksPage.step1_title'),
+      description: t('howItWorksPage.step1_desc'),
+      details: [
+        t('howItWorksPage.step1_detail1'),
+        t('howItWorksPage.step1_detail2'),
+        t('howItWorksPage.step1_detail3'),
+      ],
+    },
+    {
+      number: "02",
+      icon: UserCheck,
+      title: t('howItWorksPage.step2_title'),
+      description: t('howItWorksPage.step2_desc'),
+      details: [
+        t('howItWorksPage.step2_detail1'),
+        t('howItWorksPage.step2_detail2'),
+        t('howItWorksPage.step2_detail3'),
+      ],
+    },
+    {
+      number: "03",
+      icon: Clock,
+      title: t('howItWorksPage.step3_title'),
+      description: t('howItWorksPage.step3_desc'),
+      details: [
+        t('howItWorksPage.step3_detail1'),
+        t('howItWorksPage.step3_detail2'),
+        t('howItWorksPage.step3_detail3'),
+      ],
+    },
+    {
+      number: "04",
+      icon: Wrench,
+      title: t('howItWorksPage.step4_title'),
+      description: t('howItWorksPage.step4_desc'),
+      details: [
+        t('howItWorksPage.step4_detail1'),
+        t('howItWorksPage.step4_detail2'),
+        t('howItWorksPage.step4_detail3'),
+      ],
+    },
+    {
+      number: "05",
+      icon: CreditCard,
+      title: t('howItWorksPage.step5_title'),
+      description: t('howItWorksPage.step5_desc'),
+      details: [
+        t('howItWorksPage.step5_detail1'),
+        t('howItWorksPage.step5_detail2'),
+        t('howItWorksPage.step5_detail3'),
+      ],
+    },
+    {
+      number: "06",
+      icon: Star,
+      title: t('howItWorksPage.step6_title'),
+      description: t('howItWorksPage.step6_desc'),
+      details: [
+        t('howItWorksPage.step6_detail1'),
+        t('howItWorksPage.step6_detail2'),
+        t('howItWorksPage.step6_detail3'),
+      ],
+    },
+  ];
+
+  const features = [
+    {
+      icon: Shield,
+      title: t('howItWorksPage.feature_verified'),
+      description: t('howItWorksPage.feature_verified_desc'),
+    },
+    {
+      icon: MapPin,
+      title: t('howItWorksPage.feature_tracking'),
+      description: t('howItWorksPage.feature_tracking_desc'),
+    },
+    {
+      icon: MessageSquare,
+      title: t('howItWorksPage.feature_chat'),
+      description: t('howItWorksPage.feature_chat_desc'),
+    },
+    {
+      icon: Smartphone,
+      title: t('howItWorksPage.feature_language'),
+      description: t('howItWorksPage.feature_language_desc'),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -124,10 +121,10 @@ const HowItWorks = () => {
         <section className="bg-gradient-hero text-primary-foreground py-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              How Servify Works
+              {t('howItWorksPage.title')}
             </h1>
             <p className="text-xl text-primary-foreground/80 max-w-2xl mx-auto">
-              From booking to completion, we've made every step simple, transparent, and secure.
+              {t('howItWorksPage.subtitle')}
             </p>
           </div>
         </section>
@@ -139,9 +136,8 @@ const HowItWorks = () => {
               {steps.map((step, index) => (
                 <div
                   key={step.number}
-                  className={`flex flex-col md:flex-row gap-8 items-start mb-16 ${
-                    index % 2 === 1 ? "md:flex-row-reverse" : ""
-                  }`}
+                  className={`flex flex-col md:flex-row gap-8 items-start mb-16 ${index % 2 === 1 ? "md:flex-row-reverse" : ""
+                    }`}
                 >
                   {/* Icon */}
                   <div className="flex-shrink-0">
@@ -179,10 +175,10 @@ const HowItWorks = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Why Choose Servify?
+                {t('howItWorksPage.why_title')}
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                We've built features that make your service experience seamless and trustworthy.
+                {t('howItWorksPage.why_subtitle')}
               </p>
             </div>
 
@@ -207,19 +203,19 @@ const HowItWorks = () => {
         <section className="py-20">
           <div className="container mx-auto px-4 text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Ready to Get Started?
+              {t('howItWorksPage.cta_title')}
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Join thousands of satisfied customers who trust Servify for all their service needs.
+              {t('howItWorksPage.cta_desc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" variant="default">
                 <Link to="/services">
-                  Book a Service <ArrowRight className="w-5 h-5 ml-2" />
+                  {t('howItWorksPage.cta_book')} <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/signup?role=vendor">Become a Vendor</Link>
+                <Link to="/signup?role=vendor">{t('howItWorksPage.cta_vendor')}</Link>
               </Button>
             </div>
           </div>

@@ -13,64 +13,71 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-const values = [
-  {
-    icon: Heart,
-    title: "Trust & Transparency",
-    description:
-      "We believe in building trust through complete transparency in pricing, service quality, and vendor verification.",
-  },
-  {
-    icon: Users,
-    title: "Inclusive Access",
-    description:
-      "We design for everyone – from tech-savvy urban users to rural communities and those with limited digital literacy.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Innovation First",
-    description:
-      "We leverage AI, blockchain, and modern technology to solve real-world problems in the unorganized service sector.",
-  },
-  {
-    icon: Globe,
-    title: "Local Empowerment",
-    description:
-      "We empower local service providers with tools, visibility, and fair opportunities to grow their businesses.",
-  },
-];
-
-const stats = [
-  { value: "50K+", label: "Happy Customers" },
-  { value: "5K+", label: "Verified Vendors" },
-  { value: "100+", label: "Cities Covered" },
-  { value: "98%", label: "Satisfaction Rate" },
-];
-
-const team = [
-  {
-    name: "Maria Rasmus R",
-    role: "Founder & CEO",
-    image: "/team/maria.jpg",
-  },
-  {
-    name: "M Sowmya",
-    role: "CTO",
-    image: "/team/sowmya.jpg",
-  },
-  {
-    name: "HK.Pranathi Sree Lakshmi",
-    role: "Head of Operations",
-    image: "/team/pranathi.jpg",
-  },
-  {
-    name: "B.Manikanta",
-    role: "Head of Product",
-    image: "/team/manikanta.jpg",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const About = () => {
+  const { t } = useTranslation();
+
+  const values = [
+    {
+      icon: Heart,
+      title: t('aboutPage.value_trust'),
+      description: t('aboutPage.value_trust_desc'),
+    },
+    {
+      icon: Users,
+      title: t('aboutPage.value_inclusive'),
+      description: t('aboutPage.value_inclusive_desc'),
+    },
+    {
+      icon: Lightbulb,
+      title: t('aboutPage.value_innovation'),
+      description: t('aboutPage.value_innovation_desc'),
+    },
+    {
+      icon: Globe,
+      title: t('aboutPage.value_empowerment'),
+      description: t('aboutPage.value_empowerment_desc'),
+    },
+  ];
+
+  const stats = [
+    { value: "50K+", label: t('aboutPage.stats_customers') },
+    { value: "5K+", label: t('aboutPage.stats_vendors') },
+    { value: "100+", label: t('aboutPage.stats_cities') },
+    { value: "98%", label: t('aboutPage.stats_satisfaction') },
+  ];
+
+  const team = [
+    {
+      name: "Maria Rasmus R",
+      role: "Founder & CEO",
+      image: "/team/maria.jpg",
+    },
+    {
+      name: "M Sowmya",
+      role: "CTO",
+      image: "/team/sowmya.jpg",
+    },
+    {
+      name: "HK.Pranathi Sree Lakshmi",
+      role: "Head of Operations",
+      image: "/team/pranathi.jpg",
+    },
+    {
+      name: "B.Manikanta",
+      role: "Head of Product",
+      image: "/team/manikanta.jpg",
+    },
+  ];
+
+  // Keeping team hardcoded for now or use translation if names need transliteration, but usually names are kept as is or transliterated. 
+  // Let's keep names as is for now as extracted keys didn't include names.
+  // Actually, I missed extracting team names. Given user request is about translations, ideally names should leverage transliteration but often they are left in English or transliterated. 
+  // I will skip translating names for this iteration as I didn't add keys for them, but I will translate the role if possible.
+  // Wait, I didn't add keys for roles either in my previous JSON update. I added team_title and team_subtitle.
+  // I'll stick to translating the surrounding text.
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -81,11 +88,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                About Servify
+                {t('aboutPage.title')}
               </h1>
               <p className="text-xl text-primary-foreground/80">
-                We're on a mission to organize the unorganized service sector, making quality repairs
-                and maintenance accessible to everyone across India.
+                {t('aboutPage.subtitle')}
               </p>
             </div>
           </div>
@@ -100,12 +106,10 @@ const About = () => {
                   <Target className="w-7 h-7 text-primary" />
                 </div>
                 <h2 className="font-display text-2xl font-bold text-foreground mb-4">
-                  Our Mission
+                  {t('aboutPage.mission_title')}
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  To create a trusted, technology-driven platform that connects customers with verified
-                  local service providers, ensuring quality, transparency, and fair pricing while
-                  empowering skilled workers in the unorganized sector.
+                  {t('aboutPage.mission_desc')}
                 </p>
               </div>
 
@@ -114,12 +118,10 @@ const About = () => {
                   <Eye className="w-7 h-7 text-accent" />
                 </div>
                 <h2 className="font-display text-2xl font-bold text-foreground mb-4">
-                  Our Vision
+                  {t('aboutPage.vision_title')}
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  To become India's most trusted multi-domain service platform, reaching every corner
-                  of the country with inclusive access through voice, multi-language support, and
-                  technology that works for everyone.
+                  {t('aboutPage.vision_desc')}
                 </p>
               </div>
             </div>
@@ -131,10 +133,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Our Core Values
+                {t('aboutPage.values_title')}
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                The principles that guide everything we do at Servify.
+                {t('aboutPage.values_subtitle')}
               </p>
             </div>
 
@@ -176,16 +178,16 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="font-display text-3xl md:text-4xl font-bold mb-8 text-center text-foreground">
-                The Problem We're Solving
+                {t('aboutPage.problem_title')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
-                  "Unorganized service sector with no single platform for multiple domains",
-                  "No verification of vendors, leading to inconsistent quality and fraud",
-                  "No transparent repair history or warranty tracking",
-                  "Rural and illiterate populations excluded due to language and digital barriers",
-                  "Inconsistent pricing and hidden charges",
-                  "No real-time tracking or communication with service providers",
+                  t('aboutPage.problem_1'),
+                  t('aboutPage.problem_2'),
+                  t('aboutPage.problem_3'),
+                  t('aboutPage.problem_4'),
+                  t('aboutPage.problem_5'),
+                  t('aboutPage.problem_6'),
                 ].map((problem, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-accent mt-1 flex-shrink-0" />
@@ -202,10 +204,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Meet Our Team
+                {t('aboutPage.team_title')}
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Passionate individuals dedicated to transforming the service industry.
+                {t('aboutPage.team_subtitle')}
               </p>
             </div>
 
@@ -229,19 +231,19 @@ const About = () => {
         <section className="py-20 bg-gradient-surface">
           <div className="container mx-auto px-4 text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Join the Servify Community
+              {t('aboutPage.cta_title')}
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Whether you need a service or want to offer your skills, Servify is here for you.
+              {t('aboutPage.cta_desc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" variant="default">
                 <Link to="/services">
-                  Explore Services <ArrowRight className="w-5 h-5 ml-2" />
+                  {t('aboutPage.cta_explore')} <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/signup?role=vendor">Partner With Us</Link>
+                <Link to="/signup?role=vendor">{t('aboutPage.cta_partner')}</Link>
               </Button>
             </div>
           </div>

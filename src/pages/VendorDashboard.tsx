@@ -26,6 +26,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVendorBookings, acceptBooking, rejectBooking, updateBookingStatus } from "@/services/bookingService";
+import VendorReviews from "@/components/vendor/VendorReviews";
+import VendorEarnings from "@/components/vendor/VendorEarnings";
+import { VendorProfileEditDialog } from "@/components/profile/VendorProfileEditDialog";
 
 interface VendorProfile {
   id: string;
@@ -576,21 +579,29 @@ const VendorDashboard = () => {
                     <p className="text-sm text-muted-foreground">Hourly Rate</p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full">Edit Profile</Button>
               </div>
+              <VendorProfileEditDialog vendor={vendor} onUpdate={loadVendorData} />
             </div>
           )}
 
+          {activeTab === "reviews" && (
+            <VendorReviews vendorId={vendor.id} />
+          )}
+
+          {activeTab === "earnings" && (
+            <VendorEarnings vendorId={vendor.id} />
+          )}
+
           {/* Other Tabs - Placeholder */}
-          {!["dashboard", "profile"].includes(activeTab) && (
+          {!["dashboard", "profile", "reviews", "earnings"].includes(activeTab) && (
             <div className="bg-card rounded-2xl border border-border p-12 text-center">
               <h3 className="font-display text-xl font-semibold mb-2 capitalize">{activeTab}</h3>
               <p className="text-muted-foreground">This section is coming soon.</p>
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 };
 

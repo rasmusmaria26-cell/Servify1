@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Wrench, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
+  const { t } = useTranslation();
   return (
     <footer className="bg-card border-t border-border text-foreground">
       <div className="container mx-auto px-4 py-16">
@@ -15,7 +17,7 @@ const Footer = () => {
               <span className="font-display text-xl font-bold">Servify</span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              From Gadgets to Garage to Home – Verified Local Help at Your Fingertips.
+              {t('footer.desc')}
             </p>
             <div className="flex gap-3">
               {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
@@ -32,9 +34,15 @@ const Footer = () => {
 
           {/* Services */}
           <div>
-            <h4 className="font-display font-semibold text-lg mb-4">Services</h4>
+            <h4 className="font-display font-semibold text-lg mb-4">{t('footer.services')}</h4>
             <ul className="space-y-3">
-              {["Electronics Repair", "Mechanical Services", "Home Services", "Appliance Repair", "Plumbing", "Electrical"].map(
+              {[
+                t('services.electronics_desc'),
+                t('services.mechanical'),
+                t('services.home'),
+                t('services.electronics'), // Using existing keys for now
+                t('services.home_desc')
+              ].map(
                 (item) => (
                   <li key={item}>
                     <Link
@@ -51,14 +59,12 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h4 className="font-display font-semibold text-lg mb-4">Company</h4>
+            <h4 className="font-display font-semibold text-lg mb-4">{t('footer.company')}</h4>
             <ul className="space-y-3">
               {[
-                { name: "About Us", path: "/about" },
-                { name: "How It Works", path: "/how-it-works" },
-                { name: "Become a Vendor", path: "/signup?role=vendor" },
-                { name: "Careers", path: "/careers" },
-                { name: "Blog", path: "/blog" },
+                { name: t('navbar.about'), path: "/about" },
+                { name: t('navbar.howItWorks'), path: "/how-it-works" },
+                { name: t('hero.cta_vendor'), path: "/signup?role=vendor" },
               ].map((item) => (
                 <li key={item.name}>
                   <Link
@@ -74,7 +80,7 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-display font-semibold text-lg mb-4">Contact</h4>
+            <h4 className="font-display font-semibold text-lg mb-4">{t('footer.contact')}</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-accent mt-0.5" />
@@ -110,10 +116,10 @@ const Footer = () => {
 
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Servify. All rights reserved.
+            © {new Date().getFullYear()} Servify. {t('footer.allRightsReserved')}
           </p>
           <div className="flex gap-6">
-            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (
+            {[t('footer.privacy'), t('footer.terms'), t('footer.cookies')].map((item) => (
               <Link
                 key={item}
                 to="#"
